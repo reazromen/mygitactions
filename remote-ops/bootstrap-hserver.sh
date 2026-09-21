@@ -11,8 +11,13 @@ if [[ $EUID -ne 0 ]]; then
   echo "Run with sudo."
   exit 1
 fi
+
 if [[ -z "$RUNNER_TOKEN" ]]; then
-  echo "RUNNER_TOKEN is required."
+  read -r -s -p "GitHub runner registration token: " RUNNER_TOKEN
+  echo
+fi
+if [[ -z "$RUNNER_TOKEN" ]]; then
+  echo "Runner token is required."
   exit 1
 fi
 
@@ -30,6 +35,7 @@ install -d -o "$RUNNER_USER" -g "$RUNNER_USER" /opt/remote-ops
 release_json="$(curl -fsSL https://api.github.com/repos/actions/runner/releases/latest)"
 tag="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"])' <<<"$release_json")"
 ver="${tag#v}"
+
 case "$(uname -m)" in
   x86_64|amd64) arch=x64 ;;
   aarch64|arm64) arch=arm64 ;;
@@ -56,4 +62,5 @@ cd "$RUNNER_DIR"
 ./svc.sh start
 ./svc.sh status || true
 
+unset RUNNER_TOKEN
 echo "hserver GitHub runner is registered and started."
